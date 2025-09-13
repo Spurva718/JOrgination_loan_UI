@@ -812,3 +812,79 @@ export default function MakerInboxPage() {
     </Container>
   );
 }
+
+
+Updated MakerInboxTable to navbar 
+import React, { useState } from "react";
+import { Container, Card } from "react-bootstrap";
+import Navbar from "../components/Navbar"; // ✅ import your Navbar component
+import Filters from "../components/Filters";
+import TransactionsTable from "../components/TransactionsTable";
+import { FaInbox } from "react-icons/fa";
+
+export default function MakerInboxPage() {
+  const [filters, setFilters] = useState({});
+  const [page, setPage] = useState(1);
+
+  // Mock data
+  const MOCK_TRANSACTIONS = Array.from({ length: 20 }).map((_, i) => ({
+    transactionRef: "TXN" + (1000 + i),
+    loanId: "LN" + (100 + i),
+    applicant: ["John Doe", "Alice Smith", "Rahul Kumar", "Maria Lopez"][i % 4],
+    amount: Math.floor(Math.random() * 100000) + 5000,
+    currency: ["USD", "EUR", "INR"][i % 3],
+    createdAt: "2025-09-" + String((i % 30) + 1).padStart(2, "0"),
+    currStep: i % 2 === 0 ? "MAKER" : "CHECKER",
+    lastStep: ["INITIATED", "DOCS VERIFIED", "APPROVED"][i % 3],
+    processDate: "2025-09-" + String((i % 30) + 1).padStart(2, "0") + " 10:00:00",
+    status: ["PENDING", "IN_PROGRESS", "APPROVED"][i % 3],
+    assignedTo: i % 5 === 0 ? "user123" : "",
+    flags: i % 6 === 0 ? [{ type: "ID_PROOF", message: "Document issue found" }] : [],
+  }));
+
+  function handleApplyFilters(f) { setFilters(f); setPage(1); }
+  function handleResetFilters() { setFilters({}); setPage(1); }
+  function handlePageChange(p) { setPage(p); }
+  function handleView(txn) { alert(`Viewing ${txn.transactionRef} (${txn.loanId})`); }
+
+  const filteredData = MOCK_TRANSACTIONS; // for now just demo
+  const pageSize = 10;
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const pagedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
+
+  return (
+    <div style={{ background: "#f5f7fa", minHeight: "100vh" }}>
+      {/* ✅ Navbar at the very top */}
+      <Navbar />
+
+      <Container className="py-4">
+        <Card className="shadow-lg border-0 rounded-3">
+          <Card.Header
+            className="d-flex justify-content-between align-items-center text-white"
+            style={{
+              background: "linear-gradient(90deg, #003366 0%, #005599 100%)",
+            }}
+          >
+            <h5 className="mb-0 d-flex align-items-center gap-2">
+              <FaInbox /> Maker Inbox
+            </h5>
+            <small>Transactions Overview</small>
+          </Card.Header>
+
+          <Card.Body>
+            <Filters onApply={handleApplyFilters} onReset={handleResetFilters} />
+            <hr />
+            <TransactionsTable
+              data={pagedData}
+              loading={false}
+              page={page}
+              pages={totalPages}
+              onPageChange={handlePageChange}
+              onView={handleView}
+            />
+          </Card.Body>
+        </Card>
+      </Container>
+    </div>
+  );
+}
