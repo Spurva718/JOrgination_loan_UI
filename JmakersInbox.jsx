@@ -888,3 +888,33 @@ export default function MakerInboxPage() {
     </div>
   );
 }
+
+Filters Working and Backgraound problem 
+<div style={{ background: "linear-gradient(180deg,#e9f0f7,#f5f7fa)", minHeight: "100vh" }}>
+
+  // Apply filters to mock data
+  let filteredData = MOCK_TRANSACTIONS.filter((t) => {
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
+      if (
+        !(
+          t.transactionRef.toLowerCase().includes(s) ||
+          t.loanId.toLowerCase().includes(s) ||
+          t.applicant.toLowerCase().includes(s)
+        )
+      ) {
+        return false;
+      }
+    }
+    if (filters.status && t.status !== filters.status) return false;
+    if (filters.currStep && t.currStep !== filters.currStep) return false;
+    if (filters.dateFrom && new Date(t.createdAt) < new Date(filters.dateFrom)) return false;
+    if (filters.dateTo && new Date(t.createdAt) > new Date(filters.dateTo)) return false;
+    return true;
+  });
+
+  // Reset to page 1 every time filters change
+  const pageSize = 10;
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const pagedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
+
