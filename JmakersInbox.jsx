@@ -1180,3 +1180,192 @@ export default function TransactionsTable({
     </>
   );
 }
+
+BC 2 
+
+import React, { useState } from "react";
+import { Container, Card } from "react-bootstrap";
+import Navbar from "../components/Navbar"; // ✅ common Navbar
+import Filters from "../components/Filters";
+import TransactionsTable from "../components/TransactionsTable";
+import { FaInbox } from "react-icons/fa";
+
+export default function MakerInboxPage() {
+  const [filters, setFilters] = useState({});
+  const [page, setPage] = useState(1);
+
+  // Mock data
+  const MOCK_TRANSACTIONS = Array.from({ length: 20 }).map((_, i) => ({
+    transactionRef: "TXN" + (1000 + i),
+    loanId: "LN" + (100 + i),
+    applicant: ["John Doe", "Alice Smith", "Rahul Kumar", "Maria Lopez"][i % 4],
+    amount: Math.floor(Math.random() * 100000) + 5000,
+    currency: ["USD", "EUR", "INR"][i % 3],
+    createdAt: "2025-09-" + String((i % 30) + 1).padStart(2, "0"),
+    currStep: i % 2 === 0 ? "MAKER" : "CHECKER",
+    lastStep: ["INITIATED", "DOCS VERIFIED", "APPROVED"][i % 3],
+    processDate: "2025-09-" + String((i % 30) + 1).padStart(2, "0") + " 10:00:00",
+    status: ["PENDING", "IN_PROGRESS", "APPROVED"][i % 3],
+    assignedTo: i % 5 === 0 ? "user123" : "",
+    flags: i % 6 === 0 ? [{ type: "ID_PROOF", message: "Document issue found" }] : [],
+  }));
+
+  function handleApplyFilters(f) { setFilters(f); setPage(1); }
+  function handleResetFilters() { setFilters({}); setPage(1); }
+  function handlePageChange(p) { setPage(p); }
+  function handleView(txn) { alert(`Viewing ${txn.transactionRef} (${txn.loanId})`); }
+
+  // Apply filters
+  let filteredData = MOCK_TRANSACTIONS.filter((t) => {
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
+      if (
+        !(
+          t.transactionRef.toLowerCase().includes(s) ||
+          t.loanId.toLowerCase().includes(s) ||
+          t.applicant.toLowerCase().includes(s)
+        )
+      ) return false;
+    }
+    if (filters.status && t.status !== filters.status) return false;
+    if (filters.currStep && t.currStep !== filters.currStep) return false;
+    if (filters.dateFrom && new Date(t.createdAt) < new Date(filters.dateFrom)) return false;
+    if (filters.dateTo && new Date(t.createdAt) > new Date(filters.dateTo)) return false;
+    return true;
+  });
+
+  const pageSize = 5;
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const pagedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
+
+  return (
+    <div
+      style={{
+        background: "linear-gradient(180deg, #e9f0f7 0%, #cfd9df 100%)",
+        minHeight: "100vh",
+      }}
+    >
+      <Navbar />
+
+      <Container className="py-4">
+        <Card className="shadow-lg border-0 rounded-3" style={{ background: "#fff" }}>
+          <Card.Header
+            className="d-flex justify-content-between align-items-center text-white"
+            style={{
+              background: "linear-gradient(90deg,#003366 0%,#005599 100%)",
+            }}
+          >
+            <h5 className="mb-0 d-flex align-items-center gap-2">
+              <FaInbox /> Maker Inbox
+            </h5>
+            <small>Transactions Overview</small>
+          </Card.Header>
+
+          <Card.Body>
+            <Filters onApply={handleApplyFilters} onReset={handleResetFilters} />
+            <hr />
+            <TransactionsTable
+              data={pagedData}
+              loading={false}
+              page={page}
+              pages={totalPages}
+              onPageChange={handlePageChange}
+              onView={handleView}
+              headerStyle={{
+                background: "linear-gradient(90deg, #003366 0%, #005599 100%)",
+                color: "#fff",
+                fontWeight: "bold",
+              }}
+            />
+          </Card.Body>
+        </Card>
+      </Container>
+    </div>
+  );
+}
+
+import React from "react";
+import { Table, Pagination } from "react-bootstrap";
+import TransactionRow from "./TransactionRow";
+
+export default function TransactionsTable({
+  data,
+  loading,
+  page,
+  pages,
+  onPageChange,
+  onView,
+  headerStyle,
+}) {
+  return (
+    <>
+      {/* Custom styles for pagination */}
+      <style>{`
+        .custom-pagination .page-link {
+          color: #003366;
+          border-radius: 6px;
+          transition: all 0.3s ease;
+        }
+        .custom-pagination .page-link:hover {
+          background-color: rgba(0, 51, 102, 0.1);
+          border-color: #003366;
+        }
+        .custom-pagination .page-item.active .page-link {
+          background-color: #003366;
+          border-color: #003366;
+          color: white;
+        }
+      `}</style>
+
+      <Table hover responsive className="align-middle text-center mb-0">
+        <thead style={headerStyle}>
+          <tr>
+            <th>Txn Ref No</th>
+            <th>Loan ID</th>
+            <th>Applicant</th>
+            <th>Amount</th>
+            <th>Currency</th>
+            <th>Created At</th>
+            <th>Curr Step</th>
+            <th>Last Step</th>
+            <th>Process Date</th>
+            <th>Status</th>
+            <th>Assigned To</th>
+            <th>Flags</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <tr>
+              <td colSpan="13">Loading...</td>
+            </tr>
+          ) : data.length === 0 ? (
+            <tr>
+              <td colSpan="13">No results</td>
+            </tr>
+          ) : (
+            data.map((txn) => (
+              <TransactionRow key={txn.transactionRef} txn={txn} onView={onView} />
+            ))
+          )}
+        </tbody>
+      </Table>
+
+      <div className="d-flex justify-content-center mt-3">
+        <Pagination className="custom-pagination">
+          {Array.from({ length: pages }).map((_, i) => (
+            <Pagination.Item
+              key={i + 1}
+              active={i + 1 === page}
+              onClick={() => onPageChange(i + 1)}
+            >
+              {i + 1}
+            </Pagination.Item>
+          ))}
+        </Pagination>
+      </div>
+    </>
+  );
+}
+
