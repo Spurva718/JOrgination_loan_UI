@@ -554,3 +554,181 @@ public class MakerController {
     }
     
 }
+
+
+Changed the contains 
+package com.scb.loanOrigination.controller;
+
+import com.scb.loanOrigination.dto.makerInbox.TransactionDto;
+import com.scb.loanOrigination.dto.makerInbox.FlagDto;
+import com.scb.loanOrigination.entity.LoanApplications;
+import com.scb.loanOrigination.entity.Users;
+import com.scb.loanOrigination.entity.Workflow;
+import com.scb.loanOrigination.entity.Documents;
+import com.scb.loanOrigination.repository.WorkflowRepository;
+import com.scb.loanOrigination.service.LoanApplicationsServiceImp;
+import com.scb.loanOrigination.service.UsersServiceImp;
+import com.scb.loanOrigination.service.WorkflowServiceImp;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@CrossOrigin(origins = "*")
+public class MakerController {
+
+    private static final Logger log = LoggerFactory.getLogger(MakerController.class);
+
+    @Autowired
+    private LoanApplicationsServiceImp loanService;
+
+    @Autowired
+    private UsersServiceImp userService;
+
+    @Autowired
+    private WorkflowServiceImp workflowService;
+
+    @Autowired
+    private WorkflowRepository workflowRepository;
+
+    // ---------------- existing endpoints (kept as-is) ---------------
+
+    @RequestMapping(value="/getLoanRequestDetails/{loanId}",method= RequestMethod.GET)
+    public LoanApplications getLoanRequestDetails(@PathVariable("loanId") int loanId){
+        return loanService.getLoanRequestDetails(loanId);
+    }
+
+    @RequestMapping(value="/getUserDetails/{userId}",method= RequestMethod.GET)
+    public Users getUserDetails(@PathVariable("userId") String userId){
+        return userService.getUserDetails(userId);
+    }
+
+    @RequestMapping(value="/getWorkflowDetails/{workflowId}",method= RequestMethod.GET)
+    public Workflow getWorkflowDetails(@PathVariable("workflowId") int workflowId){
+        return workflowService.getWorkflowDetails(workflowId);
+    }
+
+    @RequestMapping(value="/saveIDProofDetails/{loanId}/{type}/{IdNumber}/{name}/{dob}/{issueDate}/{expiryDate}/{issuingAuthority}",method= RequestMethod.POST)
+    public String saveIDProofDetails(@PathVariable("loanId") int loanId, @PathVariable("type") String type, @PathVariable("IdNumber") BigInteger IdNumber, @PathVariable("name") String name, @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX") Date dob, @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX") Date issueDate, @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX") Date expiryDate, @PathVariable("issuingAuthority") String issuingAuthority)
+    {
+        return loanService.saveIDProofDetails(loanId, type, IdNumber,  name, dob, issueDate, expiryDate, issuingAuthority);
+    }
+
+    @RequestMapping(value="/saveAddressProofDetails/{loanId}/{type}/{landLordName}/{tenantName}/{addressLine1}/{addressLine2}/{city}/{state}/{postalCode}/{country}/{agreementStartDate}/{agreementEndDate}",method= RequestMethod.POST)
+    public String saveAddressProofDetails(@PathVariable("loanId") int loanId,@PathVariable("type") String type, @PathVariable("landLordName") String landLordName, @PathVariable("tenantName") String tenantName, @PathVariable("addressLine1")String addressLine1, @PathVariable("addressLine2")String addressLine2, @PathVariable("city") String city, @PathVariable("state") String state, @PathVariable("postalCode") int postalCode, @PathVariable("country") String country, @PathVariable("agreementStartDate") Date agreementStartDate, @PathVariable("agreementEndDate") Date agreementEndDate)
+    {
+        return loanService.saveAddressProofDetails( loanId,type,landLordName,tenantName, addressLine1, addressLine2, city,  state,  postalCode,  country, agreementStartDate, agreementEndDate);
+    }
+
+    @RequestMapping(value="/saveIncomeProofDetails/{loanId}/{type}/{employer}/{salaryMonth}/{grossIncome}/{netIncome}/{bankName}/{accountNumber}/{statementStart}/{statementEnd}/{averageBalance}",method= RequestMethod.POST)
+    public String saveIncomeProofDetails(@PathVariable("loanId") int loanId,@PathVariable("type") String type, @PathVariable("employer") String employer, @PathVariable("salaryMonth") String salaryMonth, @PathVariable("grossIncome")int grossIncome, @PathVariable("netIncome")int netIncome, @PathVariable("bankName") String bankName, @PathVariable("accountNumber") int accountNumber, @PathVariable("statementStart") Date statementStart, @PathVariable("statementEnd") Date statementEnd, @PathVariable("averageBalance") double averageBalance)
+    {
+        return loanService.saveIncomeProofDetails(  loanId,type, employer, salaryMonth, grossIncome, netIncome, bankName, accountNumber,  statementStart, statementEnd,  averageBalance);
+    }
+
+    @RequestMapping(value="/saveEmploymentProofDetails/{loanId}/{type}/{employer}/{designation}/{joiningDate}/{employeeID}",method= RequestMethod.POST)
+    public String saveEmploymentProofDetails(@PathVariable("loanId") int loanId,@PathVariable("type") String type, @PathVariable("employer") String employer, @PathVariable("designation") String designation,@PathVariable("joiningDate") Date joiningDate, @PathVariable("employeeID") String employeeID)
+    {
+        return loanService.saveEmploymentProofDetails(loanId,type,  employer,  designation, joiningDate,  employeeID);
+    }
+
+    @RequestMapping(value="/saveLoanFormDetails/{loanId}/{type}/{applicantName}/{country}/{currency}/{loanType}/{amount}/{loanTenure}",method= RequestMethod.POST)
+    public String saveLoanFormDetails(@PathVariable("loanId") int loanId,@PathVariable("type") String type, @PathVariable("applicantName") String applicantName, @PathVariable("country") String country,@PathVariable("currency") String currency, @PathVariable("loanType") String loanType, @PathVariable("amount") int amount, @PathVariable("loanTenure") int loanTenure)
+    {
+        return loanService.saveLoanFormDetails( loanId, type,  applicantName, country, currency, loanType, amount, loanTenure);
+    }
+
+    @RequestMapping(value="/flagDocument/{loanId}/{type}",method= RequestMethod.POST)
+    public String flagDocument(@PathVariable("loanId") int loanId, @PathVariable("type") String type)
+    {
+        return loanService.flagDocument(loanId, type);
+    }
+
+    @RequestMapping(value="/flagLoanRequest/{loanId}",method= RequestMethod.POST)
+    public String flagLoanRequest(@PathVariable("loanId") int loanId)
+    {
+        return loanService.flagLoanRequest(loanId);
+    }
+
+    @RequestMapping(value="/approveLoanRequest/{loanId}",method= RequestMethod.POST)
+    public String approveLoanRequest(@PathVariable("loanId") int loanId)
+    {
+        return loanService.approveLoanRequest(loanId);
+    }
+
+    // ---------------- new endpoint: Maker's Inbox -------------------
+    @GetMapping("/maker/inbox")
+    public List<TransactionDto> getMakerInbox() {
+        // Prefer repository method with join fetch to avoid lazy-init; fallback to findAll() if needed
+        List<Workflow> workflows;
+        try {
+            workflows = workflowRepository.findAllWithLoanDocsAndCustomer();
+        } catch (Throwable t) {
+            log.warn("findAllWithLoanDocsAndCustomer() not available or failed; falling back to findAll(). Reason: {}", t.toString());
+            workflows = workflowRepository.findAll();
+        }
+
+        List<TransactionDto> out = new ArrayList<>();
+        for (Workflow wf : workflows) {
+            LoanApplications loan = wf.getLoanApplication();
+
+            TransactionDto dto = new TransactionDto();
+            dto.setTransactionRef("TXN" + wf.getWorkflowId());
+            dto.setLoanId(loan != null ? loan.getLoanId() : 0);
+            dto.setAssignedTo(wf.getUser_id());
+
+            // applicant name from Customers (firstName + lastName) if available
+            String applicantName = wf.getUser_id();
+            if (loan != null) {
+                try {
+                    if (loan.getCustomer() != null) {
+                        String fn = loan.getCustomer().getFirstName() != null ? loan.getCustomer().getFirstName() : "";
+                        String ln = loan.getCustomer().getLastName() != null ? loan.getCustomer().getLastName() : "";
+                        String full = (fn + " " + ln).trim();
+                        if (!full.isEmpty()) applicantName = full;
+                        else if (loan.getUser_id() != null) applicantName = loan.getUser_id();
+                    } else if (loan.getUser_id() != null) {
+                        applicantName = loan.getUser_id();
+                    }
+                } catch (Exception e) {
+                    log.warn("Error reading customer name for loan {}, falling back to user_id. Reason: {}", loan.getLoanId(), e.toString());
+                    applicantName = loan.getUser_id() != null ? loan.getUser_id() : wf.getUser_id();
+                }
+            }
+            dto.setApplicant(applicantName);
+
+            dto.setCreatedAt(loan != null && loan.getCreatedAt() != null ? loan.getCreatedAt().toString() : "");
+            dto.setUpdatedAt(wf.getUpdatedAt() != null ? wf.getUpdatedAt().toString() : "");
+            dto.setStatus(wf.getStatus() != null ? wf.getStatus().name() : "");
+
+            // Build flags from Documents (counted) + append Workflow remarks (if any)
+            List<FlagDto> flags = new ArrayList<>();
+
+            if (loan != null && loan.getDocuments() != null) {
+                List<FlagDto> docFlags = loan.getDocuments().stream()
+                        .filter(doc -> doc.getFlag() != null && doc.getFlag())
+                        .map(doc -> new FlagDto(doc.getDocumentName(), doc.getComment()))
+                        .collect(Collectors.toList());
+                flags.addAll(docFlags);
+            }
+
+            // Append workflow remarks as an extra flag entry (so UI can show it too)
+            if (wf.getRemarks() != null && !wf.getRemarks().trim().isEmpty()) {
+                flags.add(new FlagDto("Remarks", wf.getRemarks()));
+            }
+
+            dto.setFlags(flags);
+            out.add(dto);
+        }
+
+        return out;
+    }
+}
