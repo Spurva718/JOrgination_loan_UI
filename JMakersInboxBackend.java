@@ -1196,3 +1196,43 @@ SELECT * FROM "Documents" WHERE user_id='user101';
 
 -- check workflow
 SELECT * FROM "Workflow" WHERE user_id='user101';
+
+
+-- seed_data.sql
+-- (use unquoted lowercase names so Postgres finds the tables Hibernate created)
+
+INSERT INTO users(user_id, password, role_name, created_at)
+VALUES ('user101','pass123','Maker', now())
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO customers(user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
+VALUES ('user101','Some Address', (now() - interval '30 years')::date, 'M', 'rahul@example.com', 'Rahul', 'Kumar', 'ABCDE1234F', 123456789012, 9876543210)
+ON CONFLICT (user_id) DO NOTHING;
+
+WITH ins AS (
+  INSERT INTO loan_applications(amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+  VALUES (500000, 'INR', 60, 7.5, 'In_Progress', now(), 'user101')
+  RETURNING loan_id
+)
+INSERT INTO documents(document_name, file_name, file_path, entries_file_path, status, flag, comment, user_id, loan_id, uploaded_at)
+SELECT 'ID_PROOF','aadhaar.pdf','/files/aadhaar.pdf','/entries/aadhaar.csv','Flagged_For_ReUpload', true, 'Aadhaar blurry','user101', loan_id, now() FROM ins;
+
+WITH ins2 AS (
+  SELECT loan_id FROM loan_applications WHERE user_id='user101' ORDER BY created_at DESC LIMIT 1
+)
+INSERT INTO documents(document_name, file_name, file_path, entries_file_path, status, flag, comment, user_id, loan_id, uploaded_at)
+SELECT 'INCOME_PROOF','salary.pdf','/files/salary.pdf','/entries/salary.csv','Flagged_For_ReUpload', true, 'Missing salary page','user101', loan_id, now() FROM ins2;
+
+WITH l AS (
+  SELECT loan_id FROM loan_applications WHERE user_id='user101' ORDER BY created_at DESC LIMIT 1
+)
+INSERT INTO workflow(step_name, status, created_at, updated_at, remarks, user_id, loan_id)
+SELECT 'Maker','Pending', now(), now(), 'Please verify employment docs', 'user101', loan_id FROM l;
+
+
+SELECT * FROM users WHERE user_id='user101';
+SELECT * FROM customers WHERE user_id='user101';
+SELECT * FROM loan_applications WHERE user_id='user101' ORDER BY created_at DESC LIMIT 1;
+SELECT * FROM documents WHERE user_id='user101';
+SELECT * FROM workflow WHERE user_id='user101';
+
