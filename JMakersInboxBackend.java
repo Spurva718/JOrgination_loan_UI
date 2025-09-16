@@ -1097,3 +1097,52 @@ public class Documents {
     public void setLoanApplication(LoanApplications loanApplication) { this.loanApplication = loanApplication; }
 }
 
+
+BEGIN;
+
+-- 1) user + customer (no-op if already exists)
+INSERT INTO "Users"(user_id, password, role_name, created_at)
+VALUES ('user101','pass123','Maker', now())
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO "Customers"(user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
+VALUES ('user101','Some Address', (now() - interval '30 years')::date, 'M', 'rahul@example.com', 'Rahul', 'Kumar', 'ABCDE1234F', 123456789012, 9876543210)
+ON CONFLICT (user_id) DO NOTHING;
+
+-- 2) Insert a loan and capture loanId (columns use snake_case)
+WITH ins AS (
+  INSERT INTO "LoanApplications"(amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+  VALUES (500000, 'INR', 60, 7.5, 'In_Progress', now(), 'user101')
+  RETURNING loanId
+)
+-- 3) Insert two flagged documents for this loan
+INSERT INTO "Documents"(document_name, file_name, file_path, entries_file_path, status, flag, comment, user_id, loan_id, uploaded_at)
+SELECT 'ID_PROOF','aadhaar.pdf','/files/aadhaar.pdf','/entries/aadhaar.csv','Flagged_For_ReUpload', true, 'Aadhaar blurry','user101', loanId, now() FROM ins;
+
+WITH ins2 AS (
+  SELECT loanId FROM "LoanApplications" WHERE user_id='user101' ORDER BY created_at DESC LIMIT 1
+)
+INSERT INTO "Documents"(document_name, file_name, file_path, entries_file_path, status, flag, comment, user_id, loan_id, uploaded_at)
+SELECT 'INCOME_PROOF','salary.pdf','/files/salary.pdf','/entries/salary.csv','Flagged_For_ReUpload', true, 'Missing salary page','user101', loanId, now() FROM ins2;
+
+-- 4) Insert workflow for that loan (remarks included)
+WITH l AS (
+  SELECT loanId FROM "LoanApplications" WHERE user_id='user101' ORDER BY created_at DESC LIMIT 1
+)
+INSERT INTO "Workflow"(step_name, status, created_at, updated_at, remarks, user_id, loan_id)
+SELECT 'Maker','Pending', now(), now(), 'Please verify employment docs', 'user101', loanId FROM l;
+
+COMMIT;
+
+
+SELECT * FROM "Users" WHERE user_id='user101';
+SELECT * FROM "Customers" WHERE user_id='user101';
+SELECT * FROM "LoanApplications" WHERE user_id='user101' ORDER BY created_at DESC LIMIT 1;
+SELECT * FROM "Documents" WHERE user_id='user101';
+SELECT * FROM "Workflow" WHERE user_id='user101';
+
+SELECT * FROM "Workflow" WHERE user_id='user101';
+SELECT * FROM "Documents" WHERE user_id='user101';
+SELECT * FROM "LoanApplications" WHERE user_id='user101';
+SELECT * FROM "Customers" WHERE user_id='user101';
+
