@@ -1001,3 +1001,99 @@ Caused by: org.hibernate.MappingException: illegal identity column type
 
 
 Process finished with exit code 1
+
+package com.scb.loanOrigination.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name="Documents")
+public class Documents {
+    public enum DocumentStatusEnum {
+        Flagged_For_ReUpload,
+        Moved_To_Checker,
+        Approved,
+        Flagged_For_Data_ReEntry
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long documentId;   // changed from BigInteger to Long
+
+    @Column(nullable = false)
+    private String documentName;
+
+    @Column(nullable = false)
+    private String fileName;
+
+    @Column(nullable = false)
+    private String filePath;
+
+    @Column(nullable = false)
+    private String entriesFilePath;
+
+    @Column(nullable = false)
+    private final LocalDateTime uploadedAt = LocalDateTime.now();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DocumentStatusEnum status;
+
+    @Column(nullable = false)
+    private Boolean flag = false;
+
+    @Column(nullable = false)
+    private String comment;
+
+    @Column(nullable = false)
+    private String user_id;
+
+    // keep raw loan_id column for compatibility
+    @Column(nullable = false)
+    private int loan_id;
+
+    // Many documents -> one loan (bidirectional). Use insertable=false, updatable=false
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "loan_id", referencedColumnName = "loanId", insertable = false, updatable = false)
+    @JsonBackReference
+    private LoanApplications loanApplication;
+
+    // getters and setters
+    public Long getDocumentId() { return documentId; }
+    public void setDocumentId(Long documentId) { this.documentId = documentId; }
+
+    public String getDocumentName() { return documentName; }
+    public void setDocumentName(String documentName) { this.documentName = documentName; }
+
+    public String getFileName() { return fileName; }
+    public void setFileName(String fileName) { this.fileName = fileName; }
+
+    public String getFilePath() { return filePath; }
+    public void setFilePath(String filePath) { this.filePath = filePath; }
+
+    public String getEntriesFilePath() { return entriesFilePath; }
+    public void setEntriesFilePath(String entriesFilePath) { this.entriesFilePath = entriesFilePath; }
+
+    public LocalDateTime getUploadedAt() { return uploadedAt; }
+
+    public DocumentStatusEnum getStatus() { return status; }
+    public void setStatus(DocumentStatusEnum status) { this.status = status; }
+
+    public Boolean getFlag() { return flag; }
+    public void setFlag(Boolean flag) { this.flag = flag; }
+
+    public String getComment() { return comment; }
+    public void setComment(String comment) { this.comment = comment; }
+
+    public String getUser_id() { return user_id; }
+    public void setUser_id(String user_id) { this.user_id = user_id; }
+
+    public int getLoan_id() { return loan_id; }
+    public void setLoan_id(int loan_id) { this.loan_id = loan_id; }
+
+    public LoanApplications getLoanApplication() { return loanApplication; }
+    public void setLoanApplication(LoanApplications loanApplication) { this.loanApplication = loanApplication; }
+}
+
