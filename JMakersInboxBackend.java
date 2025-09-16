@@ -732,3 +732,161 @@ public class MakerController {
         return out;
     }
 }
+
+
+
+package com.scb.loanOrigination.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name="Workflow")
+public class Workflow {
+
+    public enum WorkflowStepNameEnum { Maker, Checker, Approval }
+    public enum WorkFlowStatusEnum {
+        Pending,
+        Flagged_For_ReUpload,
+        Moved_To_Checker,
+        Approved,
+        Flagged_For_Data_ReEntry
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int workflowId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private WorkflowStepNameEnum stepName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private WorkFlowStatusEnum status;
+
+    @Column(nullable = false)
+    private final LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    private String remarks;
+
+    private String user_id;
+
+    @OneToOne
+    @JoinColumn(name="loan_id")
+    @JsonBackReference
+    private LoanApplications loanApplication;
+
+    // --- explicit getters / setters ---
+
+    public int getWorkflowId() { return workflowId; }
+    public void setWorkflowId(int workflowId) { this.workflowId = workflowId; }
+
+    public WorkflowStepNameEnum getStepName() { return stepName; }
+    public void setStepName(WorkflowStepNameEnum stepName) { this.stepName = stepName; }
+
+    public WorkFlowStatusEnum getStatus() { return status; }
+    public void setStatus(WorkFlowStatusEnum status) { this.status = status; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getRemarks() { return remarks; }
+    public void setRemarks(String remarks) { this.remarks = remarks; }
+
+    public String getUser_id() { return user_id; }
+    public void setUser_id(String user_id) { this.user_id = user_id; }
+
+    public LoanApplications getLoanApplication() { return loanApplication; }
+    public void setLoanApplication(LoanApplications loanApplication) { this.loanApplication = loanApplication; }
+}
+
+
+package com.scb.loanOrigination.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
+import java.math.BigInteger;
+import java.util.Date;
+
+@Entity
+@Table(name="Customers")
+public class Customers {
+
+    @Id
+    private String user_id;
+
+    @Column(nullable = false)
+    private String address;
+
+    @Column(nullable = false)
+    private Date dob;
+
+    @Column(nullable = false)
+    private char gender;
+
+    @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+
+    @Column(nullable = false)
+    private String pan;
+
+    @Column(nullable = false)
+    private BigInteger aadhaar;
+
+    @Column(nullable = false)
+    private BigInteger mobileNumber;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "user_id")
+    @JsonBackReference
+    private Users user;
+
+    // --- explicit getters / setters ---
+
+    public String getUser_id() { return user_id; }
+    public void setUser_id(String user_id) { this.user_id = user_id; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public Date getDob() { return dob; }
+    public void setDob(Date dob) { this.dob = dob; }
+
+    public char getGender() { return gender; }
+    public void setGender(char gender) { this.gender = gender; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getPan() { return pan; }
+    public void setPan(String pan) { this.pan = pan; }
+
+    public BigInteger getAadhaar() { return aadhaar; }
+    public void setAadhaar(BigInteger aadhaar) { this.aadhaar = aadhaar; }
+
+    public BigInteger getMobileNumber() { return mobileNumber; }
+    public void setMobileNumber(BigInteger mobileNumber) { this.mobileNumber = mobileNumber; }
+
+    public Users getUser() { return user; }
+    public void setUser(Users user) { this.user = user; }
+}
