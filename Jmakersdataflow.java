@@ -376,3 +376,47 @@ INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, re
 VALUES (3, 'Maker', 'Pending', NOW(), NOW(), 'All docs look fine', 'user300', 300);
 
 GET http://localhost:8080/makerInbox/Pending
+
+
+package com.scb.loanOrigination.repository;
+
+import com.scb.loanOrigination.entity.Workflow;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface WorkflowRepository extends JpaRepository<Workflow, Integer> {
+
+    // Old method (can be commented if unused)
+    // List<Workflow> findByStatus(Workflow.WorkFlowStatusEnum status);
+
+    @Query(value = """
+        SELECT w.workflow_id,
+               l.loan_id,
+               l.user_id,
+               concat(c.first_name, ' ', c.last_name) AS applicant_name,
+               w.created_at,
+               w.updated_at,
+               w.status,
+               COALESCE(SUM(CASE WHEN d.flag = true THEN 1 ELSE 0 END), 0) AS flags_count,
+               (SELECT d2.comment
+                  FROM documents d2
+                 WHERE d2.loan_id = l.loan_id
+                   AND d2.flag = true
+                 ORDER BY d2.uploaded_at DESC
+                 LIMIT 1) AS remark
+          FROM workflow w
+          JOIN loan_applications l ON w.loan_id = l.loan_id
+          JOIN customers c ON c.user_id = l.user_id
+          LEFT JOIN documents d ON d.loan_id = l.loan_id
+         WHERE w.status = :status
+      GROUP BY w.workflow_id, l.loan_id, l.user_id,
+               c.first_name, c.last_name, w.created_at, w.updated_at, w.status
+        """,
+        nativeQuery = true)
+    List<Object[]> findMakerInboxByStatusNative(String status);
+}
+
