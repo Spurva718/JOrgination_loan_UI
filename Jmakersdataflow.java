@@ -474,3 +474,40 @@ VALUES (5, 'PAN_PROOF', 'pan_300.pdf', '/files/pan_300.pdf', '/entries/pan_300.c
 
 INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, remarks, user_id, loan_id)
 VALUES (3, 'Maker', 'Pending', NOW(), NOW(), 'All docs look fine', 'user300', 300);
+
+
+[
+    {
+        "createdAt": "2025-09-17 13:29:32.399148",
+        "remark": "ID blurry - reupload required",
+        "applicantName": "John Doe",
+        "userId": "user100",
+        "workflowId": 1,
+        "loanId": 100,
+        "updatedAt": "2025-09-17 13:29:32.399148",
+        "status": "Pending",
+        "flagsCount": 1
+    },
+    {
+        "createdAt": "2025-09-17 13:29:32.399148",
+        "remark": "Joining date mismatch",
+        "applicantName": "Jane Smith",
+        "userId": "user200",
+        "workflowId": 2,
+        "loanId": 200,
+        "updatedAt": "2025-09-17 13:29:32.399148",
+        "status": "Pending",
+        "flagsCount": 1
+    },
+    {
+        "createdAt": "2025-09-17 13:29:32.399148",
+        "remark": "",
+        "applicantName": "Alex Johnson",
+        "userId": "user300",
+        "workflowId": 3,
+        "loanId": 300,
+        "updatedAt": "2025-09-17 13:29:32.399148",
+        "status": "Pending",
+        "flagsCount": 0
+    }
+]
