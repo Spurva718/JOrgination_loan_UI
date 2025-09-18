@@ -226,50 +226,7 @@ public interface IWorkflow {
         this.customer = customer;
     }
 
-package com.scb.loanOrigination.repository;
 
-import com.scb.loanOrigination.entity.Workflow;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
-
-import java.util.List;
-
-@Repository
-public interface WorkflowRepository extends JpaRepository<Workflow, Integer> {
-
-    List<Workflow> findByStatus(Workflow.WorkFlowStatusEnum status);
-
-    /**
-     * Returns rows for maker inbox:
-     * columns:
-     * 0 -> workflow_id
-     * 1 -> loan_id
-     * 2 -> user_id
-     * 3 -> applicant_name (first + last)
-     * 4 -> created_at
-     * 5 -> updated_at
-     * 6 -> status
-     * 7 -> flags_count (count of documents.flag = true)
-     * 8 -> remark (latest flagged document.comment or null)
-     */
-    @Query(value =
-            "SELECT w.workflow_id, " +
-            "       l.loan_id, " +
-            "       l.user_id, " +
-            "       concat(c.first_name, ' ', c.last_name) AS applicant_name, " +
-            "       w.created_at, w.updated_at, w.status, " +
-            "       COALESCE(SUM(CASE WHEN d.flag = true THEN 1 ELSE 0 END), 0) AS flags_count, " +
-            "       (SELECT d2.comment FROM documents d2 WHERE d2.loan_id = l.loan_id AND d2.flag = true ORDER BY d2.uploaded_at DESC LIMIT 1) AS remark " +
-            "FROM workflow w " +
-            "JOIN loan_applications l ON w.loan_id = l.loan_id " +
-            "JOIN customers c ON c.user_id = l.user_id " +
-            "LEFT JOIN documents d ON d.loan_id = l.loan_id " +
-            "WHERE w.status = :status " +
-            "GROUP BY w.workflow_id, l.loan_id, l.user_id, c.first_name, c.last_name, w.created_at, w.updated_at, w.status",
-            nativeQuery = true)
-    List<Object[]> findMakerInboxByStatusNative(String status);
-}
 
 
 import java.sql.Timestamp;
@@ -316,66 +273,14 @@ public class WorkflowServiceImp implements IWorkflow {
     }
 }
 
-
+ Controller part 
+     
 @RequestMapping(value = "/makerInbox/{status}", method = RequestMethod.GET)
 public List<Map<String, Object>> getMakerInbox(@PathVariable Workflow.WorkFlowStatusEnum status) {
     return workflowService.getMakerInboxByStatus(status);
 }
 
--- ============= USER 1 =============
-INSERT INTO users (user_id, password, role_name, created_at)
-VALUES ('user100','pass123','Customer', NOW());
 
-INSERT INTO customers (user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
-VALUES ('user100', '123 Main St, City', '1990-01-01', 'M', 'john.doe@example.com', 'John', 'Doe', 'ABCDE1234F', 123456789012, 9876543210);
-
-INSERT INTO loan_applications (loan_id, amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
-VALUES (100, 500000, 'INR', 24, 7.5, 'Initiated', NOW(), 'user100');
-
-INSERT INTO documents (document_id, document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
-VALUES (1, 'ID_PROOF', 'id_100.jpg', '/files/id_100.jpg', '/entries/id_100.csv', NOW(), 'Flagged_For_ReUpload', true, 'ID blurry - reupload required', 'user100', 100),
-       (2, 'Address_PROOF', 'addr_100.jpg', '/files/addr_100.jpg', '/entries/addr_100.csv', NOW(), 'Approved', false, '', 'user100', 100);
-
-INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, remarks, user_id, loan_id)
-VALUES (1, 'Maker', 'Pending', NOW(), NOW(), 'Please re-check documents', 'user100', 100);
-
-
--- ============= USER 2 =============
-INSERT INTO users (user_id, password, role_name, created_at)
-VALUES ('user200','pass456','Customer', NOW());
-
-INSERT INTO customers (user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
-VALUES ('user200', '456 Second St, City', '1992-05-15', 'F', 'jane.smith@example.com', 'Jane', 'Smith', 'PQRSX6789Z', 234567890123, 9876501234);
-
-INSERT INTO loan_applications (loan_id, amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
-VALUES (200, 1000000, 'INR', 36, 8.2, 'Initiated', NOW(), 'user200');
-
-INSERT INTO documents (document_id, document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
-VALUES (3, 'Income_PROOF', 'income_200.pdf', '/files/income_200.pdf', '/entries/income_200.csv', NOW(), 'Approved', false, '', 'user200', 200),
-       (4, 'Employment_PROOF', 'emp_200.pdf', '/files/emp_200.pdf', '/entries/emp_200.csv', NOW(), 'Flagged_For_ReUpload', true, 'Joining date mismatch', 'user200', 200);
-
-INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, remarks, user_id, loan_id)
-VALUES (2, 'Maker', 'Pending', NOW(), NOW(), 'Check employment proof', 'user200', 200);
-
--- ============= USER 3 =============
-INSERT INTO users (user_id, password, role_name, created_at)
-VALUES ('user300','pass789','Customer', NOW());
-
-INSERT INTO customers (user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
-VALUES ('user300', '789 Third St, City', '1995-07-20', 'M', 'alex.johnson@example.com', 'Alex', 'Johnson', 'LMNOP3456Q', 345678901234, 9876512345);
-
-INSERT INTO loan_applications (loan_id, amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
-VALUES (300, 750000, 'INR', 48, 9.0, 'Initiated', NOW(), 'user300');
-
--- Documents: both approved, none flagged
-INSERT INTO documents (document_id, document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
-VALUES (5, 'PAN_PROOF', 'pan_300.pdf', '/files/pan_300.pdf', '/entries/pan_300.csv', NOW(), 'Approved', false, '', 'user300', 300),
-       (6, 'Bank_Statement', 'bank_300.pdf', '/files/bank_300.pdf', '/entries/bank_300.csv', NOW(), 'Approved', false, '', 'user300', 300);
-
-INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, remarks, user_id, loan_id)
-VALUES (3, 'Maker', 'Pending', NOW(), NOW(), 'All docs look fine', 'user300', 300);
-
-GET http://localhost:8080/makerInbox/Pending
 
 
 package com.scb.loanOrigination.repository;
