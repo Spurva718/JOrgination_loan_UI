@@ -461,3 +461,25 @@ public interface WorkflowRepository extends JpaRepository<Workflow, Integer> {
         nativeQuery = true)
     List<Object[]> findMakerInbox();
 }
+
+
+@Query(value = """
+    SELECT w.workflow_id,
+           l.loan_id,
+           l.user_id,
+           concat(c.first_name, ' ', c.last_name) AS applicant_name,
+           w.created_at,
+           w.updated_at,
+           w.status,
+           COALESCE(SUM(CASE WHEN d.flag = true THEN 1 ELSE 0 END), 0) AS flags_count,
+           COALESCE(json_agg(d.comment) FILTER (WHERE d.flag = true), '[]'::json) AS remarks
+      FROM workflow w
+      JOIN loan_applications l ON w.loan_id = l.loan_id
+      JOIN customers c ON c.user_id = l.user_id
+      LEFT JOIN documents d ON d.loan_id = l.loan_id
+     WHERE w.step_name = 'Maker'
+  GROUP BY w.workflow_id, l.loan_id, l.user_id,
+           c.first_name, c.last_name, w.created_at, w.updated_at, w.status
+    """,
+    nativeQuery = true)
+List<Object[]> findMakerInbox();
