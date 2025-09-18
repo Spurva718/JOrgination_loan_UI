@@ -300,3 +300,88 @@ public List<Map<String, Object>> getMakerInbox() {
     return out;
 }
 } 
+
+
+-- ============= USER 1 (Pending, with flag) =============
+INSERT INTO users (user_id, password, role_name, created_at)
+VALUES ('user100','pass123','Customer', NOW());
+
+INSERT INTO customers (user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
+VALUES ('user100', '123 Main St, City', '1990-01-01', 'M', 'john.doe@example.com', 'John', 'Doe', 'ABCDE1234F', 123456789012, 9876543210);
+
+INSERT INTO loan_applications (loan_id, amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+VALUES (100, 500000, 'INR', 24, 7.5, 'Initiated', NOW(), 'user100');
+
+INSERT INTO documents (document_id, document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES (1, 'ID_PROOF', 'id_100.jpg', '/files/id_100.jpg', '/entries/id_100.csv', NOW(), 'Flagged_For_ReUpload', true, 'ID blurry - reupload required', 'user100', 100);
+
+INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, remarks, user_id, loan_id)
+VALUES (1, 'Maker', 'Pending', NOW(), NOW(), 'Please re-check documents', 'user100', 100);
+
+
+-- ============= USER 2 (Flagged_For_ReUpload) =============
+INSERT INTO users (user_id, password, role_name, created_at)
+VALUES ('user200','pass456','Customer', NOW());
+
+INSERT INTO customers (user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
+VALUES ('user200', '456 Second St, City', '1992-05-15', 'F', 'jane.smith@example.com', 'Jane', 'Smith', 'PQRSX6789Z', 234567890123, 9876501234);
+
+INSERT INTO loan_applications (loan_id, amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+VALUES (200, 1000000, 'INR', 36, 8.2, 'Initiated', NOW(), 'user200');
+
+INSERT INTO documents (document_id, document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES (2, 'Employment_PROOF', 'emp_200.pdf', '/files/emp_200.pdf', '/entries/emp_200.csv', NOW(), 'Flagged_For_ReUpload', true, 'Joining date mismatch', 'user200', 200);
+
+INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, remarks, user_id, loan_id)
+VALUES (2, 'Maker', 'Flagged_For_ReUpload', NOW(), NOW(), 'Employment proof issue', 'user200', 200);
+
+
+-- ============= USER 3 (Moved_To_Checker) =============
+INSERT INTO users (user_id, password, role_name, created_at)
+VALUES ('user300','pass789','Customer', NOW());
+
+INSERT INTO customers (user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
+VALUES ('user300', '789 Third St, City', '1995-07-20', 'M', 'alex.johnson@example.com', 'Alex', 'Johnson', 'LMNOP3456Q', 345678901234, 9876512345);
+
+INSERT INTO loan_applications (loan_id, amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+VALUES (300, 750000, 'INR', 48, 9.0, 'Initiated', NOW(), 'user300');
+
+INSERT INTO documents (document_id, document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES (3, 'PAN_PROOF', 'pan_300.pdf', '/files/pan_300.pdf', '/entries/pan_300.csv', NOW(), 'Approved', false, '', 'user300', 300);
+
+INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, remarks, user_id, loan_id)
+VALUES (3, 'Maker', 'Moved_To_Checker', NOW(), NOW(), 'Forwarded to checker', 'user300', 300);
+
+
+-- ============= USER 4 (Approved) =============
+INSERT INTO users (user_id, password, role_name, created_at)
+VALUES ('user400','pass000','Customer', NOW());
+
+INSERT INTO customers (user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
+VALUES ('user400', '101 Fourth St, City', '1998-12-12', 'F', 'lisa.wong@example.com', 'Lisa', 'Wong', 'XYZAB9876C', 456789012345, 9876523456);
+
+INSERT INTO loan_applications (loan_id, amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+VALUES (400, 200000, 'INR', 12, 6.5, 'Initiated', NOW(), 'user400');
+
+INSERT INTO documents (document_id, document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES (4, 'ID_PROOF', 'id_400.jpg', '/files/id_400.jpg', '/entries/id_400.csv', NOW(), 'Approved', false, '', 'user400', 400);
+
+INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, remarks, user_id, loan_id)
+VALUES (4, 'Maker', 'Approved', NOW(), NOW(), 'Approved successfully', 'user400', 400);
+
+
+-- ============= USER 5 (Flagged_For_Data_ReEntry) =============
+INSERT INTO users (user_id, password, role_name, created_at)
+VALUES ('user500','pass999','Customer', NOW());
+
+INSERT INTO customers (user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number)
+VALUES ('user500', '202 Fifth St, City', '1991-03-10', 'M', 'rahul.kapoor@example.com', 'Rahul', 'Kapoor', 'ASDFG1234H', 567890123456, 9876534567);
+
+INSERT INTO loan_applications (loan_id, amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+VALUES (500, 1500000, 'INR', 60, 10.0, 'Initiated', NOW(), 'user500');
+
+INSERT INTO documents (document_id, document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES (5, 'Bank_Statement', 'bank_500.pdf', '/files/bank_500.pdf', '/entries/bank_500.csv', NOW(), 'Flagged_For_Data_ReEntry', true, 'Incorrect balance data', 'user500', 500);
+
+INSERT INTO workflow (workflow_id, step_name, status, created_at, updated_at, remarks, user_id, loan_id)
+VALUES (5, 'Maker', 'Flagged_For_Data_ReEntry', NOW(), NOW(), 'Incorrect data entry detected', 'user500', 500);
