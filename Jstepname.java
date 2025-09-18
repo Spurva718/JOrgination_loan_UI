@@ -892,3 +892,160 @@ public interface WorkflowRepository extends JpaRepository<Workflow, Integer> {
             nativeQuery = true)
     List<Object[]> findMakerInbox();
 }
+
+
+Hibernate:   SELECT w.workflow_id,
+         l.loan_id,
+         l.user_id,
+         concat(c.first_name, ' ', c.last_name) AS applicant_name,
+         w.created_at,
+         w.updated_at,
+         w.status,
+         COALESCE(SUM(CASE WHEN d.flag = true THEN 1 ELSE 0 END), 0) AS flags_count,
+         COALESCE(json_agg(d.comment) FILTER (WHERE d.flag = true), '[]':json) AS remarks
+    FROM workflow w
+    JOIN loan_applications l ON w.loan_id = l.loan_id
+    JOIN customers c ON c.user_id = l.user_id
+    LEFT JOIN documents d ON d.loan_id = l.loan_id
+   WHERE w.step_name = 'Maker'
+GROUP BY w.workflow_id, l.loan_id, l.user_id,
+         c.first_name, c.last_name, w.created_at, w.updated_at, w.status
+
+2025-09-18T17:48:08.673+05:30  WARN 34200 --- [nio-8080-exec-1] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 0, SQLState: 42601
+2025-09-18T17:48:08.673+05:30 ERROR 34200 --- [nio-8080-exec-1] o.h.engine.jdbc.spi.SqlExceptionHelper   : ERROR: syntax error at or near ":"
+  Position: 354
+2025-09-18T17:48:08.681+05:30 ERROR 34200 --- [nio-8080-exec-1] o.a.c.c.C.[.[.[/].[dispatcherServlet]    : Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed: org.springframework.dao.InvalidDataAccessResourceUsageException: JDBC exception executing SQL [  SELECT w.workflow_id,
+         l.loan_id,
+         l.user_id,
+         concat(c.first_name, ' ', c.last_name) AS applicant_name,
+         w.created_at,
+         w.updated_at,
+         w.status,
+         COALESCE(SUM(CASE WHEN d.flag = true THEN 1 ELSE 0 END), 0) AS flags_count,
+         COALESCE(json_agg(d.comment) FILTER (WHERE d.flag = true), '[]':json) AS remarks
+    FROM workflow w
+    JOIN loan_applications l ON w.loan_id = l.loan_id
+    JOIN customers c ON c.user_id = l.user_id
+    LEFT JOIN documents d ON d.loan_id = l.loan_id
+   WHERE w.step_name = 'Maker'
+GROUP BY w.workflow_id, l.loan_id, l.user_id,
+         c.first_name, c.last_name, w.created_at, w.updated_at, w.status
+] [ERROR: syntax error at or near ":"
+  Position: 354] [n/a]; SQL [n/a]] with root cause
+
+org.postgresql.util.PSQLException: ERROR: syntax error at or near ":"
+  Position: 354
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2675) ~[postgresql-42.3.10.jar:42.3.10]
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2365) ~[postgresql-42.3.10.jar:42.3.10]
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:355) ~[postgresql-42.3.10.jar:42.3.10]
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:490) ~[postgresql-42.3.10.jar:42.3.10]
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:408) ~[postgresql-42.3.10.jar:42.3.10]
+	at org.postgresql.jdbc.PgPreparedStatement.executeWithFlags(PgPreparedStatement.java:167) ~[postgresql-42.3.10.jar:42.3.10]
+	at org.postgresql.jdbc.PgPreparedStatement.executeQuery(PgPreparedStatement.java:119) ~[postgresql-42.3.10.jar:42.3.10]
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeQuery(ProxyPreparedStatement.java:52) ~[HikariCP-5.0.1.jar:na]
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeQuery(HikariProxyPreparedStatement.java) ~[HikariCP-5.0.1.jar:na]
+	at org.hibernate.sql.results.jdbc.internal.DeferredResultSetAccess.executeQuery(DeferredResultSetAccess.java:246) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.sql.results.jdbc.internal.DeferredResultSetAccess.getResultSet(DeferredResultSetAccess.java:167) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.sql.results.jdbc.internal.AbstractResultSetAccess.getMetaData(AbstractResultSetAccess.java:36) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.sql.results.jdbc.internal.AbstractResultSetAccess.getColumnCount(AbstractResultSetAccess.java:52) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.query.results.ResultSetMappingImpl.resolve(ResultSetMappingImpl.java:193) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl.resolveJdbcValuesSource(JdbcSelectExecutorStandardImpl.java:325) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl.doExecuteQuery(JdbcSelectExecutorStandardImpl.java:115) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.sql.exec.internal.JdbcSelectExecutorStandardImpl.executeQuery(JdbcSelectExecutorStandardImpl.java:83) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.sql.exec.spi.JdbcSelectExecutor.list(JdbcSelectExecutor.java:76) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.sql.exec.spi.JdbcSelectExecutor.list(JdbcSelectExecutor.java:65) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.query.sql.internal.NativeSelectQueryPlanImpl.performList(NativeSelectQueryPlanImpl.java:138) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.query.sql.internal.NativeQueryImpl.doList(NativeQueryImpl.java:621) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.query.spi.AbstractSelectionQuery.list(AbstractSelectionQuery.java:427) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.hibernate.query.Query.getResultList(Query.java:120) ~[hibernate-core-6.4.4.Final.jar:6.4.4.Final]
+	at org.springframework.data.jpa.repository.query.JpaQueryExecution$CollectionExecution.doExecute(JpaQueryExecution.java:129) ~[spring-data-jpa-3.2.5.jar:3.2.5]
+	at org.springframework.data.jpa.repository.query.JpaQueryExecution.execute(JpaQueryExecution.java:92) ~[spring-data-jpa-3.2.5.jar:3.2.5]
+	at org.springframework.data.jpa.repository.query.AbstractJpaQuery.doExecute(AbstractJpaQuery.java:149) ~[spring-data-jpa-3.2.5.jar:3.2.5]
+	at org.springframework.data.jpa.repository.query.AbstractJpaQuery.execute(AbstractJpaQuery.java:137) ~[spring-data-jpa-3.2.5.jar:3.2.5]
+	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:170) ~[spring-data-commons-3.2.5.jar:3.2.5]
+	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158) ~[spring-data-commons-3.2.5.jar:3.2.5]
+	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:164) ~[spring-data-commons-3.2.5.jar:3.2.5]
+	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:143) ~[spring-data-commons-3.2.5.jar:3.2.5]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:70) ~[spring-data-commons-3.2.5.jar:3.2.5]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:123) ~[spring-tx-6.1.6.jar:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:392) ~[spring-tx-6.1.6.jar:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119) ~[spring-tx-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:137) ~[spring-tx-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.data.jpa.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:135) ~[spring-data-jpa-3.2.5.jar:3.2.5]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:223) ~[spring-aop-6.1.6.jar:6.1.6]
+	at jdk.proxy2/jdk.proxy2.$Proxy125.findMakerInbox(Unknown Source) ~[na:na]
+	at com.scb.loanOrigination.service.WorkflowServiceImp.getMakerInbox(WorkflowServiceImp.java:96) ~[classes/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:354) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:123) ~[spring-tx-6.1.6.jar:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:392) ~[spring-tx-6.1.6.jar:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119) ~[spring-tx-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720) ~[spring-aop-6.1.6.jar:6.1.6]
+	at com.scb.loanOrigination.service.WorkflowServiceImp$$SpringCGLIB$$0.getMakerInbox(<generated>) ~[classes/:na]
+	at com.scb.loanOrigination.controller.MakerController.getMakerInbox(MakerController.java:115) ~[classes/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568) ~[na:na]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255) ~[spring-web-6.1.6.jar:6.1.6]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188) ~[spring-web-6.1.6.jar:6.1.6]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118) ~[spring-webmvc-6.1.6.jar:6.1.6]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926) ~[spring-webmvc-6.1.6.jar:6.1.6]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831) ~[spring-webmvc-6.1.6.jar:6.1.6]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-6.1.6.jar:6.1.6]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089) ~[spring-webmvc-6.1.6.jar:6.1.6]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979) ~[spring-webmvc-6.1.6.jar:6.1.6]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014) ~[spring-webmvc-6.1.6.jar:6.1.6]
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:903) ~[spring-webmvc-6.1.6.jar:6.1.6]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:564) ~[tomcat-embed-core-10.1.20.jar:6.0]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885) ~[spring-webmvc-6.1.6.jar:6.1.6]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658) ~[tomcat-embed-core-10.1.20.jar:6.0]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:206) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) ~[tomcat-embed-websocket-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-6.1.6.jar:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-6.1.6.jar:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) ~[spring-web-6.1.6.jar:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1736) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63) ~[tomcat-embed-core-10.1.20.jar:10.1.20]
+	at java.base/java.lang.Thread.run(Thread.java:833) ~[na:na]
+
