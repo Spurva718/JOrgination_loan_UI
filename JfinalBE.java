@@ -1414,3 +1414,64 @@ INSERT INTO documents (document_name, file_name, file_path, entries_file_path, u
 ('BANK_STATEMENT', 'bank2.pdf', '/docs/bank2.pdf', '/entries/bank2.json', NOW(), 'Flagged_For_ReUpload', true, 'Old statement', 'maker2', 2),
 ('SALARY_SLIP', 'salary3.pdf', '/docs/salary3.pdf', '/entries/salary3.json', NOW(), 'Flagged_For_Data_ReEntry', true, 'Mismatch in salary', 'maker3', 3),
 ('PAN_CARD', 'pan4.pdf', '/docs/pan4.pdf', '/entries/pan4.json', NOW(), 'Uploaded', false, 'OK', 'maker4', 4);
+
+
+-- 1. USERS
+INSERT INTO users (user_id, password, role_name, created_at) VALUES
+('maker1', 'pass123', 'Maker', NOW()),
+('maker2', 'pass123', 'Maker', NOW()),
+('maker3', 'pass123', 'Maker', NOW()),
+('maker4', 'pass123', 'Maker', NOW());
+
+-- 2. CUSTOMERS
+INSERT INTO customers (user_id, address, dob, gender, email, first_name, last_name, pan, aadhaar, mobile_number) VALUES
+('maker1', 'Delhi', '1990-01-15', 'M', 'john.doe@mail.com', 'John', 'Doe', 'ABCDE1234F', 123456789012, 9876543210),
+('maker2', 'Mumbai', '1992-03-20', 'F', 'alice.smith@mail.com', 'Alice', 'Smith', 'PQRSX9876L', 223456789012, 9876543211),
+('maker3', 'Bangalore', '1991-07-25', 'M', 'rahul.kumar@mail.com', 'Rahul', 'Kumar', 'LMNOP3456Z', 323456789012, 9876543212),
+('maker4', 'Chennai', '1993-12-05', 'F', 'maria.lopez@mail.com', 'Maria', 'Lopez', 'GHJKL5432Q', 423456789012, 9876543213);
+
+-- 3. LOAN APPLICATIONS (capture loan_id)
+INSERT INTO loan_applications (amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+VALUES (500000, 'INR', 24, 8.5, 'Initiated', NOW(), 'maker1')
+RETURNING loan_id INTO loan1;
+
+INSERT INTO loan_applications (amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+VALUES (600000, 'INR', 36, 9.0, 'In_Progress', NOW(), 'maker2')
+RETURNING loan_id INTO loan2;
+
+INSERT INTO loan_applications (amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+VALUES (750000, 'INR', 48, 8.0, 'In_Progress', NOW(), 'maker3')
+RETURNING loan_id INTO loan3;
+
+INSERT INTO loan_applications (amount, currency, loan_tenure, interest_rate, status, created_at, user_id)
+VALUES (400000, 'INR', 18, 7.5, 'Initiated', NOW(), 'maker4')
+RETURNING loan_id INTO loan4;
+
+-- 4. WORKFLOWS (use captured loan_ids)
+INSERT INTO workflow (step_name, status, created_at, updated_at, loan_id, remarks, user_id)
+VALUES ('Maker', 'Moved_To_Maker', NOW(), NOW(), loan1, 'Loan submitted for review', 'maker1');
+
+INSERT INTO workflow (step_name, status, created_at, updated_at, loan_id, remarks, user_id)
+VALUES ('Maker', 'Flagged_For_ReUpload', NOW(), NOW(), loan2, 'Address proof needs resubmission', 'maker2');
+
+INSERT INTO workflow (step_name, status, created_at, updated_at, loan_id, remarks, user_id)
+VALUES ('Maker', 'Flagged_For_Data_ReEntry', NOW(), NOW(), loan3, 'Salary slip mismatch', 'maker3');
+
+INSERT INTO workflow (step_name, status, created_at, updated_at, loan_id, remarks, user_id)
+VALUES ('Maker', 'Moved_To_Maker', NOW(), NOW(), loan4, 'Fresh loan assigned to Maker', 'maker4');
+
+-- 5. DOCUMENTS (link to same loan_ids, comment NOT NULL)
+INSERT INTO documents (document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES ('ID_PROOF', 'id1.pdf', '/docs/id1.pdf', '/entries/id1.json', NOW(), 'Flagged_For_ReUpload', true, 'Photo unclear', 'maker1', loan1);
+
+INSERT INTO documents (document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES ('ADDRESS_PROOF', 'addr2.pdf', '/docs/addr2.pdf', '/entries/addr2.json', NOW(), 'Uploaded', false, 'OK', 'maker2', loan2);
+
+INSERT INTO documents (document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES ('BANK_STATEMENT', 'bank2.pdf', '/docs/bank2.pdf', '/entries/bank2.json', NOW(), 'Flagged_For_ReUpload', true, 'Old statement', 'maker2', loan2);
+
+INSERT INTO documents (document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES ('SALARY_SLIP', 'salary3.pdf', '/docs/salary3.pdf', '/entries/salary3.json', NOW(), 'Flagged_For_Data_ReEntry', true, 'Mismatch in salary', 'maker3', loan3);
+
+INSERT INTO documents (document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
+VALUES ('PAN_CARD', 'pan4.pdf', '/docs/pan4.pdf', '/entries/pan4.json', NOW(), 'Uploaded', false, 'OK', 'maker4', loan4);
