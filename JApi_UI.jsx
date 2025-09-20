@@ -338,3 +338,93 @@ export default function TransactionRow({ txn, onView }) {
     </>
   );
 }
+
+import React from "react";
+import { Button, Badge, Alert } from "react-bootstrap";
+import { FaEye, FaExclamationCircle } from "react-icons/fa";
+
+export default function TransactionRow({ txn, onView }) {
+  const hasFlags = txn.flags && txn.flags.length > 0;
+
+  // Direct mapping: just decide badge color, keep text same as backend
+  function getStatusBadge(status) {
+    switch (status) {
+      case "Moved_To_Maker":
+        return { text: "Moved_To_Maker", color: "warning" }; // 🟡
+      case "Flagged_For_ReUpload":
+        return { text: "Flagged_For_ReUpload", color: "danger" }; // 🔴
+      case "Moved_To_Checker":
+        return { text: "Moved_To_Checker", color: "info" }; // 🔵
+      default:
+        return { text: status, color: "secondary" };
+    }
+  }
+
+  const statusInfo = getStatusBadge(txn.status);
+
+  return (
+    <>
+      <style>{`
+        .view-btn {
+          background-color: #005599;
+          border-color: #005599;
+          color: white;
+          transition: all 0.3s ease;
+        }
+        .view-btn:hover {
+          background-color: #003366 !important;
+          color: white !important;
+          border-color: #002244 !important;
+        }
+      `}</style>
+
+      <tr className={hasFlags ? "table-danger" : ""} style={{ cursor: "pointer" }}>
+        <td>{txn.transactionRef}</td>
+        <td>{txn.loanId}</td>
+        <td>{txn.assignedTo || "-"}</td>
+        <td>{txn.applicant}</td>
+        <td>{txn.createdAt}</td>
+        <td>{txn.updatedAt}</td>
+        <td>
+          <Badge bg={statusInfo.color}>{statusInfo.text}</Badge>
+        </td>
+        <td>
+          {hasFlags ? (
+            <Badge bg="danger">
+              <FaExclamationCircle /> {txn.flags.length}
+            </Badge>
+          ) : (
+            <Badge bg="secondary">0</Badge>
+          )}
+        </td>
+        <td>
+          <Button
+            size="sm"
+            className="view-btn"
+            onClick={() => onView(txn)}
+          >
+            <FaEye /> View
+          </Button>
+        </td>
+      </tr>
+
+      {hasFlags && (
+        <tr>
+          <td colSpan="9" className="p-0">
+            <Alert variant="danger" className="mb-0 p-2 small">
+              <strong>Re-upload required:</strong>
+              <ul className="mb-0">
+                {txn.flags.map((flag, i) => (
+                  <li key={i}>
+                    <strong>{flag.type}</strong> - {flag.message}
+                  </li>
+                ))}
+              </ul>
+            </Alert>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
