@@ -1331,3 +1331,40 @@ VALUES
 ('Checker', 'Moved_To_Checker', NOW(), NOW(), 3, 'Sent to Checker for validation', 'user_checker1'),
 ('Approval', 'Approved', NOW(), NOW(), 4, 'Loan approved by Approver', 'user_checker1'),
 ('Customer', 'Flagged_For_Data_ReEntry', NOW(), NOW(), 5, 'Customer needs to correct data', 'user_customer1');
+
+###
+-- USERS
+INSERT INTO Users (userId, password, roleName, createdAt) VALUES
+('maker1', 'pass123', 'Maker', NOW()),
+('maker2', 'pass123', 'Maker', NOW()),
+('maker3', 'pass123', 'Maker', NOW()),
+('maker4', 'pass123', 'Maker', NOW());
+
+-- CUSTOMERS
+INSERT INTO Customers (userId, address, dob, gender, email, firstName, lastName, pan, aadhaar, mobileNumber) VALUES
+('maker1', 'Delhi', '1990-01-15', 'M', 'john.doe@mail.com', 'John', 'Doe', 'ABCDE1234F', 123456789012, 9876543210),
+('maker2', 'Mumbai', '1992-03-20', 'F', 'alice.smith@mail.com', 'Alice', 'Smith', 'PQRSX9876L', 223456789012, 9876543211),
+('maker3', 'Bangalore', '1991-07-25', 'M', 'rahul.kumar@mail.com', 'Rahul', 'Kumar', 'LMNOP3456Z', 323456789012, 9876543212),
+('maker4', 'Chennai', '1993-12-05', 'F', 'maria.lopez@mail.com', 'Maria', 'Lopez', 'GHJKL5432Q', 423456789012, 9876543213);
+
+-- LOAN APPLICATIONS
+INSERT INTO LoanApplications (amount, currency, loanTenure, interestRate, status, createdAt, userId) VALUES
+(500000, 'INR', 24, 8.5, 'Initiated', NOW(), 'maker1'),
+(600000, 'INR', 36, 9.0, 'In_Progress', NOW(), 'maker2'),
+(750000, 'INR', 48, 8.0, 'In_Progress', NOW(), 'maker3'),
+(400000, 'INR', 18, 7.5, 'Initiated', NOW(), 'maker4');
+
+-- WORKFLOWS (only Maker-relevant statuses)
+INSERT INTO Workflow (stepName, status, createdAt, updatedAt, loanId, remarks, userId) VALUES
+('Maker', 'Moved_To_Maker', NOW(), NOW(), 1, 'Loan submitted for review', 'maker1'),
+('Maker', 'Flagged_For_ReUpload', NOW(), NOW(), 2, 'Address proof needs resubmission', 'maker2'),
+('Maker', 'Flagged_For_Data_ReEntry', NOW(), NOW(), 3, 'Salary slip mismatch', 'maker3'),
+('Maker', 'Moved_To_Maker', NOW(), NOW(), 4, 'Fresh loan assigned to Maker', 'maker4');
+
+-- DOCUMENTS (flags for testing)
+INSERT INTO Documents (documentName, fileName, filePath, entriesFilePath, uploadedAt, status, flag, comment, userId, loanId) VALUES
+('ID_PROOF', 'id1.pdf', '/docs/id1.pdf', '/entries/id1.json', NOW(), 'Flagged_For_ReUpload', true, 'Photo unclear', 'maker1', 1),
+('ADDRESS_PROOF', 'addr2.pdf', '/docs/addr2.pdf', '/entries/addr2.json', NOW(), 'Uploaded', false, NULL, 'maker2', 2),
+('BANK_STATEMENT', 'bank2.pdf', '/docs/bank2.pdf', '/entries/bank2.json', NOW(), 'Flagged_For_ReUpload', true, 'Old statement', 'maker2', 2),
+('SALARY_SLIP', 'salary3.pdf', '/docs/salary3.pdf', '/entries/salary3.json', NOW(), 'Flagged_For_Data_ReEntry', true, 'Mismatch in salary', 'maker3', 3),
+('PAN_CARD', 'pan4.pdf', '/docs/pan4.pdf', '/entries/pan4.json', NOW(), 'Uploaded', false, NULL, 'maker4', 4);
