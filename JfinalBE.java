@@ -1475,3 +1475,118 @@ VALUES ('SALARY_SLIP', 'salary3.pdf', '/docs/salary3.pdf', '/entries/salary3.jso
 
 INSERT INTO documents (document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id)
 VALUES ('PAN_CARD', 'pan4.pdf', '/docs/pan4.pdf', '/entries/pan4.json', NOW(), 'Uploaded', false, 'OK', 'maker4', loan4);
+
+
+package com.scb.loanOrigination.dto.makerInbox;
+
+public interface MakerInboxProjection {
+    Long getWorkflowId();
+    Long getLoanId();
+    String getUserId();
+    String getApplicantName();
+    String getStatus();
+    String getRemarks();
+    Integer getFlagsCount();
+    String getCreatedAt();
+    String getUpdatedAt();
+}
+
+package com.scb.loanOrigination.repository;
+
+import com.scb.loanOrigination.entity.Workflow;
+import com.scb.loanOrigination.dto.makerInbox.MakerInboxProjection;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface WorkflowRepository extends JpaRepository<Workflow, Long> {
+    Workflow findByloanId(long loanId);
+    Optional<Workflow> findByLoanApplication_LoanId(Long loanId);
+    List<Workflow> findByUserId(String userId);
+    List<Workflow> findByStatus(Workflow.WorkFlowStatusEnum status);
+    List<Workflow> findByStepName(Workflow.WorkflowStepNameEnum stepName);
+
+    // ✅ New Maker Inbox query
+    @Query("""
+    SELECT w.workflowId AS workflowId,
+           w.loanId AS loanId,
+           w.userId AS userId,
+           CONCAT(c.firstName, ' ', c.lastName) AS applicantName,
+           w.status AS status,
+           w.remarks AS remarks,
+           COUNT(d) FILTER (WHERE d.flag = true) AS flagsCount,
+           CAST(w.createdAt AS string) AS createdAt,
+           CAST(w.updatedAt AS string) AS updatedAt
+    FROM Workflow w
+    JOIN LoanApplications l ON w.loanId = l.loanId
+    JOIN Customers c ON l.userId = c.userId
+    LEFT JOIN Documents d ON d.loanId = w.loanId
+    WHERE w.stepName = 'Maker'
+      AND w.status IN ('Moved_To_Maker','Flagged_For_ReUpload','Flagged_For_Data_ReEntry')
+    GROUP BY w.workflowId, w.loanId, w.userId, c.firstName, c.lastName,
+             w.status, w.remarks, w.createdAt, w.updatedAt
+    """)
+    List<MakerInboxProjection> getMakerInbox();
+}
+
+package com.scb.loanOrigination.service;
+
+import com.scb.loanOrigination.dto.makerInbox.MakerInboxProjection;
+import com.scb.loanOrigination.entity.Workflow;
+import com.scb.loanOrigination.repository.WorkflowRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class WorkflowServiceImp implements IWorkflow {
+
+    private final WorkflowRepository workflowRepo;
+
+    public WorkflowServiceImp(WorkflowRepository workflowRepo) {
+        this.workflowRepo = workflowRepo;
+    }
+
+    // Existing methods...
+
+    // ✅ New service method
+    @Transactional
+    public List<MakerInboxProjection> getMakerInbox() {
+        return workflowRepo.getMakerInbox();
+    }
+}
+
+
+package com.scb.loanOrigination.controller;
+
+import com.scb.loanOrigination.dto.makerInbox.MakerInboxProjection;
+import com.scb.loanOrigination.service.WorkflowServiceImp;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/workflows")
+@CrossOrigin(origins = "*")
+public class WorkflowController {
+
+    private final WorkflowServiceImp workflowService;
+
+    public WorkflowController(WorkflowServiceImp workflowService) {
+        this.workflowService = workflowService;
+    }
+
+    // Existing endpoints...
+
+    // ✅ New Maker Inbox endpoint
+    @GetMapping("/makerInbox")
+    public ResponseEntity<List<MakerInboxProjection>> getMakerInbox() {
+        return ResponseEntity.ok(workflowService.getMakerInbox());
+    }
+}
