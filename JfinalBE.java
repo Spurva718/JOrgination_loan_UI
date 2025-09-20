@@ -1302,4 +1302,32 @@ public interface IWorkflow {
     List<Workflow> getWorkflowsByStatus(Workflow.WorkFlowStatusEnum status);
 }
 
+-- Insert Users
+INSERT INTO Users (userId, password, roleName, createdAt)
+VALUES 
+('user_maker1', 'pass123', 'Maker', NOW()),
+('user_checker1', 'pass123', 'Checker', NOW()),
+('user_customer1', 'pass123', 'Customer', NOW());
 
+-- Insert Customers (linked with user_customer1)
+INSERT INTO Customers (userId, address, dob, gender, email, firstName, lastName, pan, aadhaar, mobileNumber)
+VALUES 
+('user_customer1', 'Mumbai', '1995-06-15', 'F', 'customer1@mail.com', 'Priya', 'Sharma', 'ABCDE1234F', 123456789012, 9876543210);
+
+-- Insert Loan Applications
+INSERT INTO LoanApplications (amount, currency, loanTenure, interestRate, status, createdAt, userId)
+VALUES
+(500000, 'INR', 24, 8.5, 'Initiated', NOW(), 'user_customer1'),
+(800000, 'INR', 36, 9.0, 'In_Progress', NOW(), 'user_customer1'),
+(1200000, 'INR', 60, 10.0, 'Rejected', NOW(), 'user_customer1'),
+(250000, 'INR', 12, 7.5, 'Approved', NOW(), 'user_customer1'),
+(400000, 'INR', 18, 8.0, 'In_Progress', NOW(), 'user_customer1');
+
+-- Insert Workflows (5 test cases with different stepName + status)
+INSERT INTO Workflow (stepName, status, createdAt, updatedAt, loanId, remarks, userId)
+VALUES
+('Maker', 'Moved_To_Maker', NOW(), NOW(), 1, 'Initial review by Maker', 'user_maker1'),
+('Maker', 'Flagged_For_ReUpload', NOW(), NOW(), 2, 'Maker flagged document issue', 'user_maker1'),
+('Checker', 'Moved_To_Checker', NOW(), NOW(), 3, 'Sent to Checker for validation', 'user_checker1'),
+('Approval', 'Approved', NOW(), NOW(), 4, 'Loan approved by Approver', 'user_checker1'),
+('Customer', 'Flagged_For_Data_ReEntry', NOW(), NOW(), 5, 'Customer needs to correct data', 'user_customer1');
