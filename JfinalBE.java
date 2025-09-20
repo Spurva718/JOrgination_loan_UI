@@ -1097,3 +1097,209 @@ public class WorkflowServiceImp implements IWorkflow
 }
 
 CHANGED THE CONTROLLER FOR SWAGGER
+
+package com.scb.loanOrigination.service;
+
+import com.scb.loanOrigination.LoanOrigination;
+import com.scb.loanOrigination.entity.LoanApplications;
+import com.scb.loanOrigination.entity.Workflow;
+import com.scb.loanOrigination.exception.AppException;
+import com.scb.loanOrigination.exception.CheckerException;
+import com.scb.loanOrigination.exception.MakerException;
+
+import com.scb.loanOrigination.repository.LoanRepository;
+import com.scb.loanOrigination.repository.WorkflowRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class WorkflowServiceImp implements IWorkflow
+{
+    @Autowired
+    private WorkflowRepository workflowRepo;
+    @Autowired
+    private LoanRepository loanRepo;
+
+    public WorkflowServiceImp(WorkflowRepository workflowRepo, LoanRepository loanRepo) {
+        this.workflowRepo = workflowRepo;
+        this.loanRepo = loanRepo;
+    }
+
+    public Workflow createInitial(Long loanId, String userId, String remarks) {
+        LoanApplications loan = loanRepo.findById(loanId).orElseThrow(()-> AppException.notFound("Loan Not Found"));
+
+        workflowRepo.findByLoanApplication_LoanId(loanId).ifPresent(wf ->{
+            throw AppException.badRequest("Workflow already exists for loan" + loanId);
+        });
+
+        Workflow wf = new Workflow();
+        wf.setLoanApplication(loan);
+        wf.setUserId(userId);
+        wf.setStepName(Workflow.WorkflowStepNameEnum.Maker);
+        wf.setStatus(Workflow.WorkFlowStatusEnum.Moved_To_Maker);
+        wf.setRemarks(remarks);
+        wf.setUpdatedAt(LocalDateTime.now());
+
+        return workflowRepo.save(wf);
+    }
+
+    public Workflow getByLoan(Long loanId) {
+        return workflowRepo.findByLoanApplication_LoanId(loanId).orElseThrow(()->AppException.notFound("Workflow not found for loan" + loanId));
+    }
+
+    public List<Workflow> listbyUser(String userId) {
+        return workflowRepo.findByUserId(userId);
+    }
+
+    public Workflow getWorkflowDetails(long workflowId) throws MakerException{
+        if(workflowRepo.existsById(workflowId))
+        {
+            return workflowRepo.findById(workflowId).get();
+        }
+        else
+        {
+            throw new MakerException("No Workflow with workflow ID: "+workflowId+" found");
+        }
+    }
+
+    public String flagWorkflowForReUpload(long workflowId)
+    {
+        Workflow workflow = getWorkflowDetails(workflowId);
+        workflow.setStatus(Workflow.WorkFlowStatusEnum.Flagged_For_ReUpload);
+        workflow.setStepName(Workflow.WorkflowStepNameEnum.Customer);
+        workflowRepo.save(workflow);
+        return "Loan request flagged";
+    }
+
+    public String moveWorkflowToChecker(long workflowId)
+    {
+        Workflow workflow = getWorkflowDetails(workflowId);
+        workflow.setStatus(Workflow.WorkFlowStatusEnum.Moved_To_Checker);
+        workflow.setStepName(Workflow.WorkflowStepNameEnum.Checker);
+        workflowRepo.save(workflow);
+        return "Loan request flagged";
+    }
+
+//    Checker APIs
+    public String assignMaker(long loanId){
+        Workflow wf = workflowRepo.findByloanId(loanId);
+        wf.setStepName(Workflow.WorkflowStepNameEnum.Maker);
+        wf.setStatus(Workflow.WorkFlowStatusEnum.Flagged_For_Data_ReEntry);
+        workflowRepo.save(wf);
+        return "WorkItem Assigned to Maker successfully";
+    }
+
+    public String approveLoanRequest(long loanId){
+        Workflow wf = workflowRepo.findByloanId(loanId);
+        wf.setStatus(Workflow.WorkFlowStatusEnum.Approved);
+        wf.setStepName(Workflow.WorkflowStepNameEnum.Approval);
+
+        Optional<LoanApplications> optionLoanElem = loanRepo.findById(loanId);
+        if (optionLoanElem.isEmpty()) {
+            throw new CheckerException("Requested Loan doesn't exist");
+        }
+        LoanApplications loanElem = optionLoanElem.get();
+        loanElem.setStatus(LoanApplications.LoanStatusEnum.Approved);
+        workflowRepo.save(wf);
+        loanRepo.save(loanElem);
+        return "Loan approved successfully";
+    }
+
+    @Override
+    @Transactional
+    public List<Workflow> getWorkflowsByStatus(Workflow.WorkFlowStatusEnum status){
+        return workflowRepo.findByStatus(status);
+    }
+}
+
+package com.scb.loanOrigination.controller;
+
+
+import com.scb.loanOrigination.entity.Workflow;
+import com.scb.loanOrigination.service.WorkflowServiceImp;
+//import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/workflows")
+@CrossOrigin(origins = "*")
+
+public class WorkflowController {
+
+    private final WorkflowServiceImp workflowService;
+
+    public WorkflowController(WorkflowServiceImp workflowService) {
+        this.workflowService = workflowService;
+    }
+
+    //@Operation(summary = "Get Workflow by loanId")
+    @GetMapping("/by-loan/{loanId}")
+    public ResponseEntity<Workflow> getByLoan(@PathVariable Long loanId){
+        return ResponseEntity.ok(workflowService.getByLoan(loanId));
+    }
+
+    //@Operation(summary = "List Workflows by userId")
+    @GetMapping
+    public ResponseEntity<List<Workflow>> listResponseEntity(@RequestParam String userId){
+        return ResponseEntity.ok(workflowService.listbyUser(userId));
+    }
+
+    @RequestMapping(value="/getWorkflowsByStatus/{status}",method = RequestMethod.GET)
+    public List<Workflow> getWorkflowsByStatus(@PathVariable Workflow.WorkFlowStatusEnum status){
+        return workflowService.getWorkflowsByStatus(status);
+    }
+}
+
+package com.scb.loanOrigination.repository;
+
+
+import com.scb.loanOrigination.entity.Workflow;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface WorkflowRepository extends JpaRepository<Workflow, Long> {
+    public Workflow findByloanId(long loanId);
+    Optional<Workflow> findByLoanApplication_LoanId(Long loanId);
+
+    List<Workflow> findByUserId(String userId);
+
+    List<Workflow> findByStatus(Workflow.WorkFlowStatusEnum status);
+}
+
+package com.scb.loanOrigination.service;
+
+
+import com.scb.loanOrigination.entity.Workflow;
+import com.scb.loanOrigination.exception.MakerException;
+
+import java.util.List;
+
+
+public interface IWorkflow {
+    Workflow createInitial(Long loanId,String userId,String remarks);
+
+    Workflow getByLoan(Long loanId);
+
+    List<Workflow> listbyUser(String userId);
+    public Workflow getWorkflowDetails(long workflowId) throws MakerException;
+
+    public String flagWorkflowForReUpload(long workflowId);
+
+    public String moveWorkflowToChecker(long workflowId);
+
+    List<Workflow> getWorkflowsByStatus(Workflow.WorkFlowStatusEnum status);
+}
+
+
