@@ -619,3 +619,79 @@ export default function TransactionRow({ txn, onView }) {
     </>
   );
 }
+
+
+package com.scb.loanOrigination.dto.makerInbox;
+
+public class MakerInboxDTO {
+    private Long workflowId;
+    private Long loanId;
+    private String userId;
+    private String applicantName;
+    private String status;
+    private String remarks;
+    private Integer flagsCount;
+    private String createdAt;
+    private String updatedAt;
+
+    // ✅ Constructor (needed for JPA mapping)
+    public MakerInboxDTO(Long workflowId, Long loanId, String userId,
+                         String applicantName, String status, String remarks,
+                         Integer flagsCount, String createdAt, String updatedAt) {
+        this.workflowId = workflowId;
+        this.loanId = loanId;
+        this.userId = userId;
+        this.applicantName = applicantName;
+        this.status = status;
+        this.remarks = remarks;
+        this.flagsCount = flagsCount;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    // ✅ Getters
+    public Long getWorkflowId() { return workflowId; }
+    public Long getLoanId() { return loanId; }
+    public String getUserId() { return userId; }
+    public String getApplicantName() { return applicantName; }
+    public String getStatus() { return status; }
+    public String getRemarks() { return remarks; }
+    public Integer getFlagsCount() { return flagsCount; }
+    public String getCreatedAt() { return createdAt; }
+    public String getUpdatedAt() { return updatedAt; }
+}
+
+@Query("""
+SELECT new com.scb.loanOrigination.dto.makerInbox.MakerInboxDTO(
+       w.workflowId,
+       w.loanId,
+       w.userId,
+       CONCAT(c.firstName, ' ', c.lastName),
+       w.status,
+       w.remarks,
+       COUNT(d),
+       CAST(w.createdAt AS string),
+       CAST(w.updatedAt AS string)
+)
+FROM Workflow w
+JOIN LoanApplications l ON w.loanId = l.loanId
+JOIN Customers c ON l.userId = c.userId
+LEFT JOIN Documents d ON d.loanId = w.loanId
+WHERE w.stepName = 'Maker'
+  AND w.status IN ('Moved_To_Maker','Flagged_For_ReUpload','Flagged_For_Data_ReEntry')
+GROUP BY w.workflowId, w.loanId, w.userId, c.firstName, c.lastName,
+         w.status, w.remarks, w.createdAt, w.updatedAt
+""")
+List<MakerInboxDTO> getMakerInbox();
+
+
+
+public List<MakerInboxDTO> getMakerInbox() {
+    return workflowRepo.getMakerInbox();
+}
+
+@GetMapping("/inbox")
+public ResponseEntity<List<MakerInboxDTO>> getMakerInbox() {
+    return ResponseEntity.ok(workflowService.getMakerInbox());
+}
+
