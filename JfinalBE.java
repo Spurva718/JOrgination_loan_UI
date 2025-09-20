@@ -1408,3 +1408,9 @@ INSERT INTO documents (document_name, file_name, file_path, entries_file_path, u
 ('SALARY_SLIP', 'salary3.pdf', '/docs/salary3.pdf', '/entries/salary3.json', NOW(), 'Flagged_For_Data_ReEntry', true, 'Mismatch in salary', 'maker3', 3),
 ('PAN_CARD', 'pan4.pdf', '/docs/pan4.pdf', '/entries/pan4.json', NOW(), 'Uploaded', false, NULL, 'maker4', 4);
 
+INSERT INTO documents (document_name, file_name, file_path, entries_file_path, uploaded_at, status, flag, comment, user_id, loan_id) VALUES
+('ID_PROOF', 'id1.pdf', '/docs/id1.pdf', '/entries/id1.json', NOW(), 'Flagged_For_ReUpload', true, 'Photo unclear', 'maker1', 1),
+('ADDRESS_PROOF', 'addr2.pdf', '/docs/addr2.pdf', '/entries/addr2.json', NOW(), 'Uploaded', false, 'OK', 'maker2', 2),
+('BANK_STATEMENT', 'bank2.pdf', '/docs/bank2.pdf', '/entries/bank2.json', NOW(), 'Flagged_For_ReUpload', true, 'Old statement', 'maker2', 2),
+('SALARY_SLIP', 'salary3.pdf', '/docs/salary3.pdf', '/entries/salary3.json', NOW(), 'Flagged_For_Data_ReEntry', true, 'Mismatch in salary', 'maker3', 3),
+('PAN_CARD', 'pan4.pdf', '/docs/pan4.pdf', '/entries/pan4.json', NOW(), 'Uploaded', false, 'OK', 'maker4', 4);
