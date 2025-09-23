@@ -403,3 +403,98 @@ public class WorkflowServiceImp implements IWorkflow
     }
 
 }
+
+
+
+package com.scb.loanOrigination.service;
+
+import com.scb.loanOrigination.dto.MakerInboxDTO;
+import com.scb.loanOrigination.repository.WorkflowRepository;
+import com.scb.loanOrigination.repository.LoanRepository;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+class WorkflowServiceImpTest {
+
+    @Mock
+    private WorkflowRepository workflowRepo;
+
+    @Mock
+    private LoanRepository loanRepo;
+
+    @InjectMocks
+    private WorkflowServiceImp workflowService;
+
+    WorkflowServiceImpTest() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    void testGetMakerInbox() {
+        // Mocking
+        MakerInboxDTO dto = new MakerInboxDTO(
+                1L, 101L, "user001", "John Doe",
+                null, "Test Remark", 2L,
+                "2025-09-21", "2025-09-22"
+        );
+        when(workflowRepo.getMakerInbox()).thenReturn(List.of(dto));
+
+        // Call service
+        List<MakerInboxDTO> result = workflowService.getMakerInbox();
+
+        // Verify
+        assertEquals(1, result.size());
+        assertEquals("John Doe", result.get(0).getApplicantName());
+        assertEquals("Test Remark", result.get(0).getRemarks());
+    }
+}
+
+package com.scb.loanOrigination.controller;
+
+import com.scb.loanOrigination.dto.MakerInboxDTO;
+import com.scb.loanOrigination.service.WorkflowServiceImp;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
+
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(MakerController.class)
+class MakerControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private WorkflowServiceImp workflowService;
+
+    @Test
+    void testGetMakerInbox() throws Exception {
+        MakerInboxDTO dto = new MakerInboxDTO(
+                1L, 101L, "user001", "John Doe",
+                null, "Remark", 1L,
+                "2025-09-21", "2025-09-22"
+        );
+
+        when(workflowService.getMakerInbox()).thenReturn(List.of(dto));
+
+        mockMvc.perform(get("/api/maker/makerInbox"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].applicantName").value("John Doe"))
+                .andExpect(jsonPath("$[0].remarks").value("Remark"));
+    }
+}
