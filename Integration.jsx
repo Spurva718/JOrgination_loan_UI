@@ -409,3 +409,101 @@ let filteredData = transactions.filter((t) => {
 
   return true;
 });
+
+Designed filters
+import React, { useState, useEffect } from "react";
+import { Form, Row, Col, Button, Collapse, Card, Badge } from "react-bootstrap";
+import { FaFilter } from "react-icons/fa";
+
+export default function Filters({ onApply, onReset }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState(""); 
+  const [activeCount, setActiveCount] = useState(0);
+
+  useEffect(() => {
+    let count = 0;
+    if (search && search !== "") count++;
+    if (status && status !== "") count++;
+    setActiveCount(count);
+  }, [search, status]);
+
+  function applyFilters() {
+    onApply({ search, status });
+    setOpen(false);
+  }
+
+  function resetFilters() {
+    setSearch("");
+    setStatus("");
+    onReset();
+    setOpen(false);
+  }
+
+  return (
+    <div>
+      {/* Toggle Button */}
+      <Button
+        variant="outline-primary"
+        size="sm"
+        onClick={() => setOpen(!open)}
+        className="mb-2 d-flex align-items-center gap-2 rounded-pill"
+      >
+        <FaFilter />
+        {open ? "Hide Filter" : "Show Filter"}
+        {activeCount > 0 && (
+          <Badge bg="danger" pill>
+            {activeCount}
+          </Badge>
+        )}
+      </Button>
+
+      {/* Collapsible Filter Box */}
+      <Collapse in={open}>
+        <div className="mt-2">
+          <Card body className="bg-light rounded-3 shadow-sm border-0">
+            <Form className="small">
+              <Row className="g-3 align-items-center">
+                {/* Search Input */}
+                <Col md={6}>
+                  <Form.Control
+                    size="sm"
+                    placeholder="🔍 Search Workflow ID / Loan ID / Applicant"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="rounded-pill shadow-sm border border-primary"
+                  />
+                </Col>
+
+                {/* Status Dropdown */}
+                <Col md={4}>
+                  <Form.Select
+                    size="sm"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="rounded-pill shadow-sm border border-primary text-secondary"
+                  >
+                    <option value="">📋 All Status</option>
+                    <option value="Moved_To_Maker">Moved To Maker</option>
+                    <option value="Flagged_For_Data_ReEntry">Flagged For Data ReEntry</option>
+                  </Form.Select>
+                </Col>
+
+                {/* Action Buttons */}
+                <Col md={2} className="d-flex justify-content-end gap-2">
+                  <Button variant="primary" size="sm" className="rounded-pill px-3">
+                    Apply
+                  </Button>
+                  <Button variant="secondary" size="sm" className="rounded-pill px-3">
+                    Reset
+                  </Button>
+                </Col>
+              </Row>
+            </Form>
+          </Card>
+        </div>
+      </Collapse>
+    </div>
+  );
+}
+
