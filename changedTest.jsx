@@ -133,3 +133,20 @@ class MakerControllerTest {
                 .andExpect(content().json("[]"));
     }
 }
+
+comments = flaggedDocs.map((doc) => {
+  let parsedComment;
+  try {
+    parsedComment = JSON.parse(doc.comment);  // parse JSON string
+  } catch (e) {
+    console.error("Invalid JSON in comment:", doc.comment);
+    parsedComment = { comment: doc.comment }; // fallback to raw string
+  }
+
+  console.log("Parsed Comment Object:", parsedComment); // 👀 Debug log
+
+  return {
+    type: doc.documentName,
+    message: parsedComment.comment || "", // ✅ only take comment field
+  };
+});
