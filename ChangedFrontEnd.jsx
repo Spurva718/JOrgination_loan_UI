@@ -805,3 +805,101 @@ export default function TransactionRow({ txn, onView }) {
     </>
   );
 }
+
+
+Updated transaction row :
+import React, { useState } from "react";
+import { Button, Badge, Alert } from "react-bootstrap";
+import { FaEye, FaExclamationCircle } from "react-icons/fa";
+
+export default function TransactionRow({ txn, onView }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasFlags = txn.flagsCount && txn.flagsCount > 0;
+
+  return (
+    <>
+      <style>{`
+        .view-btn {
+          background-color: #005599;
+          border-color: #005599;
+          color: white;
+          transition: all 0.3s ease;
+        }
+        .view-btn:hover {
+          background-color: #003366 !important;
+          color: white !important;
+          border-color: #002244 !important;
+        }
+        .comment-list {
+          text-align: left; /* Align comments left */
+        }
+      `}</style>
+
+      {/* Main Row */}
+      <tr
+        className={hasFlags ? "table-danger" : ""}
+        style={{ cursor: hasFlags ? "pointer" : "default" }}
+        onClick={() => hasFlags && setExpanded(!expanded)}
+      >
+        <td className="fw-bold">WI00{txn.workflowId}</td>
+        <td className="fw-bold">LN00{txn.loanId}</td>
+        <td className="fw-bold">{txn.userId || "-"}</td>
+        <td className="fw-bold">{txn.applicant}</td>
+        <td className="fw-bold">{txn.createdAt}</td>
+        <td className="fw-bold">{txn.updatedAt}</td>
+        <td>
+          <Badge
+            bg={
+              txn.status === "Moved_To_Maker"
+                ? "info"
+                : txn.status === "Flagged_For_Data_ReEntry"
+                ? "danger"
+                : "secondary"
+            }
+          >
+            {txn.status}
+          </Badge>
+        </td>
+        <td>
+          {hasFlags ? (
+            <Badge bg="danger">
+              <FaExclamationCircle /> {txn.flagsCount}
+            </Badge>
+          ) : (
+            <Badge bg="secondary">0</Badge>
+          )}
+        </td>
+        <td>
+          <Button
+            size="sm"
+            className="view-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onView(txn);
+            }}
+          >
+            <FaEye /> View
+          </Button>
+        </td>
+      </tr>
+
+      {/* Expandable Row for Comments */}
+      {expanded && hasFlags && (
+        <tr>
+          <td colSpan="9" className="p-0">
+            <Alert variant="danger" className="mb-0 p-2 small comment-list">
+              <strong>Flagged Documents Remarks:</strong>
+              <ul className="mb-0">
+                {txn.flags.map((flag, i) => (
+                  <li key={i}>
+                    <strong>{flag.type}</strong> - {flag.message}
+                  </li>
+                ))}
+              </ul>
+            </Alert>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
