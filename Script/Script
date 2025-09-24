@@ -1,0 +1,130 @@
+
+
+### 🔹 **Frontend (React)**
+
+* **Framework**: React (functional components).
+* **UI Libraries**:
+
+  * React-Bootstrap → Cards, Tables, Pagination, Alerts, Forms.
+  * React-Icons → Icons like `FaInbox`, `FaEye`, `FaExclamationCircle`.
+* **State Management**:
+
+  * React Hooks (`useState`, `useEffect`).
+  * Local component state (no Redux needed for this scale).
+* **API Integration**:
+
+  * Modular API calls in `/api/maker/index.js`.
+  * Uses **async/await** for clean asynchronous data fetching.
+* **Data Handling**:
+
+  * Data formatting (e.g., converting ISO dates to `YYYY-MM-DD`).
+  * Search + filter functionality implemented in-memory.
+  * Pagination implemented via slicing array (`pageSize = 3`).
+* **Error Handling**:
+
+  * `try...catch` blocks around API calls.
+  * Graceful fallbacks if flagged documents aren’t JSON.
+
+---
+
+### 🔹 **Backend (Spring Boot, Java)**
+
+* **Architecture**:
+
+  * REST API built using Spring Boot.
+  * Layered: **Controller → Service → Repository → Entity (DB)**.
+* **Key Endpoints**:
+
+  * `/api/maker/makerInbox` → Fetch loan workflows for Maker.
+  * `/api/maker/flaggedDocuments/{loanId}` → Fetch flagged documents for a loan.
+  * `/flagDocument` → Save flags with comments.
+  * `/moveWorkflowToChecker` → Transition workflow step.
+* **Data Transfer Objects (DTOs)**:
+
+  * `MakerInboxDTO` → Sends only required fields to frontend.
+  * `FlaggedDocumentDTO` → For flagged documents (documentName + comment).
+* **Repository Layer**:
+
+  * `WorkflowRepository` → Custom JPQL query with joins to fetch applicant, workflow, flags.
+  * `DocumentsRepository` → Fetch flagged documents per loan.
+* **Entity Relationships**:
+
+  * `Workflow` ↔ `LoanApplications` ↔ `Users` ↔ `Documents`.
+* **Error Handling**:
+
+  * Custom Exceptions (`MakerException`, `CheckerException`, `AppException`).
+
+---
+
+### 🔹 **Database Layer**
+
+* **Tables**:
+
+  * `Workflow` → Tracks workflow state, status, timestamps.
+  * `LoanApplications` → Loan-specific details.
+  * `Users` & `Customers` → User/applicant data.
+  * `Documents` → Stores uploaded documents with flags.
+* **Flags Handling**:
+
+  * Stored as `flag=true` with `comment` (JSON string or plain string).
+  * JSON parsing handled at frontend.
+
+---
+
+### 🔹 **Testing**
+
+* **Backend**:
+
+  * `MakerControllerTest` using `@WebMvcTest`.
+  * `WorkflowServiceImpTest` with Mockito mocks.
+  * Unit testing of `getMakerInbox()` and `getFlaggedDocuments()`.
+* **Frontend**:
+
+  * Console debugging for parsed JSON.
+  * Could extend with Jest/React Testing Library for component testing.
+
+---
+
+### 🔹 **DevOps / Deployment**
+
+* **Build Tools**:
+
+  * Frontend → Webpack/Babel (React standard build).
+  * Backend → Maven/Gradle (Spring Boot build).
+* **Packaging**:
+
+  * Backend packaged as a JAR.
+  * React build bundled and served via Nginx or Spring Boot static resources.
+* **CI/CD**:
+
+  * Git + Azure DevOps (from your repo context).
+  * Pipelines for automated build & deploy.
+* **Runtime Environment**:
+
+  * Java 17 (Spring Boot).
+  * Node.js for frontend build.
+  * DB (Postgres/MySQL depending on infra).
+
+---
+
+### 🔹 **Extra Technical Highlights**
+
+* **Security**:
+
+  * `@CrossOrigin` in `MakerController` allows cross-origin requests from React.
+* **Pagination Strategy**:
+
+  * Currently client-side slicing.
+  * Could be optimized by server-side pagination (Spring Data JPA + Pageable).
+* **Scalability**:
+
+  * UI modularized (Filters, TransactionsTable, TransactionRow).
+  * DTO-based API responses avoid over-fetching.
+
+---
+
+⚡ This level of detail shows that you not only **built** Maker Inbox but also understand the **technical ecosystem around it**.
+
+---
+
+Do you want me to also prepare a **final slide summary (technical stack diagram)** — showing React (frontend) → REST API (Spring Boot) → DB (Postgres/MySQL) — so you can quickly show the flow in your presentation?
